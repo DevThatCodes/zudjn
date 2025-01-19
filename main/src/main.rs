@@ -1,4 +1,4 @@
-use std::{fs, usize};
+use std::{fs, simd::u8x2};
 
 #[derive(Debug)]
 enum TokenActions {
@@ -27,8 +27,8 @@ impl<'a> Token<'_> {
         Token {name, uses_prev_num, action}
     }
 
-    fn do_action(action: TokenActions, action_number: i8) {
-        match action {
+    fn do_action(&self, action_number: u8, cell_grid: &mut Vec<u8>) {
+        match self.action {
             TokenActions::MoveLeft => {}
             TokenActions::MoveRight => {}
             TokenActions::MoveUp => {}
@@ -58,7 +58,8 @@ fn main() {
     // ? : |if the current memory cell value equals a number, do the code in the brackets, (example:
     // if the current cell value is equal to 5, print it as an ascii character: 5?[&] )
 
-
+    let mut cell_position_x : u8 = 0;
+    let mut cell_position_y : u8 = 0;
     let mut cell_grid : Vec<u8> = Vec::new();
     let content : String = fs::read_to_string("main.zjn").unwrap();
     let accepted_numbers : Vec<&str> = vec!["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
@@ -78,20 +79,29 @@ fn main() {
 
     println!("{}", content);
 
+    let dbgmd : bool = false;
     let mut index : usize = 0;
     // TODO: add error handling instead of just unwrapping it and expecting something
     content.as_str().chars().for_each(|token| {
         for real_token in &tokens {
             if token.to_string().as_str() == real_token.name {
-                println!("----------------------------------------");
-                println!("real token: {:#?}", real_token);
+                if dbgmd {
+                    println!("----------------------------------------");
+                    println!("real token: {:#?}", real_token);
+                    println!("{:?}", real_token.action);
+                }
                 // do stuff here because this is after it has been verified as a token, the token will be real_token
-                println!("{:?}", real_token.action);
                 // check if token has extra functions if a number is preceeded
-                if real_token.uses_prev_num {
-                    println!("index: {} before index: {}", index, index -1);
-                    println!("number {}, index {}, caused by {}, current token {}", content.chars().nth(index-1).unwrap(), index-1, content.chars().nth(index).unwrap(), token);
-                    println!("{}", content.chars().nth(index-1).unwrap().to_string().parse::<i8>().unwrap());
+                if real_token.uses_prev_num && accepted_numbers.contains(&content.chars().nth(index-1).unwrap().to_string().as_str()) {
+                    if dbgmd {
+                        println!("index: {} before index: {}", index, index -1);
+                        println!("number {}, index {}, caused by {}, current token {}", content.chars().nth(index-1).unwrap(), index-1, content.chars().nth(index).unwrap(), token);
+                        println!("{}", content.chars().nth(index-1).unwrap().to_string().parse::<u8>().unwrap());
+                    } else {
+                        real_token.do_action(content.chars().nth(index-1).unwrap().to_string().parse::<u8>().unwrap(), &mut cell_grid)
+                    }
+                } else {
+                    real_token.do_action(1, &mut cell_grid)
                 }
             }
         }
