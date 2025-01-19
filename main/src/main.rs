@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, usize};
 
 #[derive(Debug)]
 enum TokenActions {
@@ -26,6 +26,22 @@ impl<'a> Token<'_> {
     fn create(name: &'a str, uses_prev_num: bool, action: TokenActions) -> Token<'a> {
         Token {name, uses_prev_num, action}
     }
+
+    fn do_action(action: TokenActions, action_number: i8) {
+        match action {
+            TokenActions::MoveLeft => {}
+            TokenActions::MoveRight => {}
+            TokenActions::MoveUp => {}
+            TokenActions::MoveDown => {}
+            TokenActions::AddCurrent => {println!("{}", action_number)}
+            TokenActions::SubstractCurrent => {}
+            TokenActions::SetWidth => {}
+            TokenActions::SetHeight => {}
+            TokenActions::OutputAsNumber => {}
+            TokenActions::OutputAsAscii => {}
+            TokenActions::IfIsThisNumber => {println!("this function is a complex one, and therefore it has not been implemented yet")}
+        }
+    }
 }
 
 fn main() {
@@ -44,7 +60,7 @@ fn main() {
 
 
     let mut cell_grid : Vec<u8> = Vec::new();
-    let content = fs::read_to_string("main.zjn").unwrap();
+    let content : String = fs::read_to_string("main.zjn").unwrap();
     let accepted_numbers : Vec<&str> = vec!["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
     let tokens : Vec<Token> = vec![
         Token::create("<", false, TokenActions::MoveLeft),
@@ -61,10 +77,19 @@ fn main() {
     ];
 
     println!("{}", content);
+
+    let mut index : usize = 0;
+    // TODO: add error handling instead of just unwrapping it and expecting something
     content.as_str().chars().for_each(|token| {
         for real_token in &tokens {
             if token.to_string().as_str() == real_token.name {
+                // do stuff here because this is after it has been verified as a token, the token will be real_token
+                index += 1;
                 println!("{:?}", real_token.action);
+                // check if token has extra functions if a number is preceeded
+                if real_token.uses_prev_num {
+                    println!("{:#?}", content.get(index));
+                }
             }
         }
         println!("{}", token);
