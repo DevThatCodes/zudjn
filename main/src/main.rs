@@ -83,15 +83,18 @@ fn main() {
     content.as_str().chars().for_each(|token| {
         for real_token in &tokens {
             if token.to_string().as_str() == real_token.name {
+                println!("----------------------------------------");
+                println!("real token: {:#?}", real_token);
                 // do stuff here because this is after it has been verified as a token, the token will be real_token
-                index += 1;
                 println!("{:?}", real_token.action);
                 // check if token has extra functions if a number is preceeded
                 if real_token.uses_prev_num {
-                    println!("{:#?}", content.get(index));
+                    println!("index: {} before index: {}", index, index -1);
+                    println!("number {}, index {}, caused by {}, current token {}", content.chars().nth(index-1).unwrap(), index-1, content.chars().nth(index).unwrap(), token);
+                    println!("{}", content.chars().nth(index-1).unwrap().to_string().parse::<i8>().unwrap());
                 }
             }
         }
-        println!("{}", token);
+        index += 1;
     })
 }
