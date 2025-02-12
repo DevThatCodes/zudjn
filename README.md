@@ -43,5 +43,8 @@ Hello World (in one line):
 3x3y9+9+9+9+9+9+9+9+>9+9+9+5+>9+9+9+9+9+9+9+9+9+9+9+2+v9+9+9+9+9+9+9+9+9+9+9+9+9+2+<9+9+9+9+9+9+9+9+9+9+9+9+3+<9+9+9+9+9+9+9+9+9+9+9+9+v9+9+9+9+9+9+9+9+9+9+9+9+6+>9+9+9+6+>9+9+9+9+9+9+9+9+9+9+9++^^<<&>>&v<<&&>&^&v>&<&<v&^&v>>&<&
 ```
 
+### history
+Zudjn was made in 2025 by [@DevThatCodes](https://github.com/DevThatCodes) (me). The name zudjn was chosen when i made a random "word" generator and one of the "words" that it generated was zudjn.
+
 ### Links
 [esolangs.org page](https://esolangs.org/wiki/Zudjn)
