@@ -1,6 +1,6 @@
-use std::fs;
+use std::{env, fs, process::exit};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum TokenActions {
     AddCurrent,
     SubstractCurrent,
@@ -12,7 +12,9 @@ enum TokenActions {
     SetWidth,
     OutputAsNumber,
     OutputAsAscii,
-    IfIsThisNumber
+    IfIsThisNumber,
+    PrintCellGrid,
+    Comment,
 }
 
 #[derive(Debug)]
@@ -25,6 +27,7 @@ struct Token<'a> {
 #[derive(Debug)]
 struct Environment {
     has_set_width: bool,
+    in_comment: bool,
     width: u8,
     height: u8
 }
@@ -35,6 +38,7 @@ impl<'a> Token<'_> {
     }
 
     fn do_action(&self, action_number: u8, cell_grid: &mut Vec<u8>, cell_position_x: &mut u8, cell_position_y: &mut u8, zjn_env: &mut Environment) {
+        if !zjn_env.in_comment {
         match self.action {
             TokenActions::MoveLeft => {*cell_position_x -= 1} // decrease cell_position_x
             TokenActions::MoveRight => {*cell_position_x += 1} // increase cell_position_x
@@ -44,16 +48,32 @@ impl<'a> Token<'_> {
             TokenActions::SubstractCurrent => { cell_grid[(*cell_position_x * zjn_env.width + *cell_position_x) as usize] -= action_number} // decrease cell_grid[cell_position_y * width + cell_position_x]
             TokenActions::SetWidth => {zjn_env.change_has_set_width(true); zjn_env.set_width(action_number)} // required first before SetHeight, set height to what is inputted
             TokenActions::SetHeight => {if zjn_env.has_set_width {zjn_env.set_height(action_number); *cell_grid = vec![0; (zjn_env.width * zjn_env.height).into()]}else {println!("error")}} // required second, set width to what is inputted, then set cell_grid to vec[0; width * height]
-            TokenActions::OutputAsNumber => {println!("{}", cell_grid[(*cell_position_y * zjn_env.width + *cell_position_x) as usize])} // print cell_grid[cell_position_y * width + cell_position_x]
-            TokenActions::OutputAsAscii => {println!("{}", cell_grid[(*cell_position_y * zjn_env.width + *cell_position_x) as usize] as char)} // print cell_grid[cell_position_y * width + cell_position_x] as char
-            TokenActions::IfIsThisNumber => {println!("this function is a complex one, and therefore it has not been implemented yet")}
+            TokenActions::OutputAsNumber => {print!("{}", cell_grid[(*cell_position_y * zjn_env.width + *cell_position_x) as usize])} // print cell_grid[cell_position_y * width + cell_position_x]
+            TokenActions::OutputAsAscii => {print!("{}", cell_grid[(*cell_position_y * zjn_env.width + *cell_position_x) as usize] as char)} // print cell_grid[cell_position_y * width + cell_position_x] as char
+            TokenActions::IfIsThisNumber => {println!("this function is a complex one, and therefore it has not been implemented yet")},
+            TokenActions::PrintCellGrid => {
+                print!("[");
+                for y in 0..zjn_env.height {
+                    for x in 0..zjn_env.width {
+                        if usize::from(y * zjn_env.width + x) + 1 == cell_grid.len() {
+                            println!("{}]", cell_grid[(y * zjn_env.width + x) as usize])
+                        } else {
+                            print!("{}, ", cell_grid[(y * zjn_env.width + x) as usize])
+                        }
+                    }
+                    println!(" ");
+                }
+            }
+            TokenActions::Comment => {zjn_env.in_comment = true}
+        }} else if zjn_env.in_comment && self.action == TokenActions::Comment {
+            zjn_env.in_comment = false;
         }
     }
 }
 
 impl Environment {
     fn create() -> Environment {
-        Environment { has_set_width: false, width: 0, height: 0}
+        Environment { has_set_width: false, in_comment: false, width: 0, height: 0}
     }
 
     fn set_height(&mut self, height: u8) {
@@ -83,12 +103,22 @@ fn main() {
     // & : output the current cell value as an ascii character
     // ? : |if the current memory cell value equals a number, do the code in the brackets, (example:
     // if the current cell value is equal to 5, print it as an ascii character: 5?[&] )
+    // | : output the cell grid as a whole (this is mainly used for debugging, but it can be used in other ways)
+    // / : if you put two, any text in between them will be ignored
 
     let mut cell_position_x : u8 = 0;
     let mut cell_position_y : u8 = 0;
     let mut cell_grid : Vec<u8> = Vec::new();
     let mut zjn_env = Environment::create();
-    let content : String = fs::read_to_string("main.zjn").unwrap();
+    let filename : String;
+    let dbgmd : u8 = 0; // debug mode, set this to true if you want extra output for debugging
+    let args : Vec<String> = env::args().collect();
+    if args.len() > 1 {
+        filename = args[1].clone()
+    } else {
+        exit(0)
+    }
+    let content : String = fs::read_to_string(filename).unwrap();
     let accepted_numbers : Vec<&str> = vec!["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
     let tokens : Vec<Token> = vec![
         Token::create("<", false, TokenActions::MoveLeft),
@@ -102,17 +132,20 @@ fn main() {
         Token::create("@", false, TokenActions::OutputAsNumber),
         Token::create("&", false, TokenActions::OutputAsAscii),
         Token::create("?", true, TokenActions::IfIsThisNumber),
+        Token::create("|", false, TokenActions::PrintCellGrid),
+        Token::create("/", false, TokenActions::Comment),
     ];
 
-    println!("{}", content);
+    if dbgmd >= 1 {
+        println!("{}", content);
+    }
 
-    let dbgmd : bool = false; // debug mode, set this to true if you want extra output for debugging
     let mut index : usize = 0;
     // TODO: add error handling instead of just unwrapping it and expecting something
     content.as_str().chars().for_each(|token| {
         for real_token in &tokens {
             if token.to_string().as_str() == real_token.name {
-                if dbgmd {
+                if dbgmd == 2 {
                     println!("----------------------------------------");
                     println!("real token: {:#?}", real_token);
                     println!("{:?}", cell_grid);
@@ -122,7 +155,7 @@ fn main() {
                 // do stuff here because this is after it has been verified as a token, the token will be real_token
                 // check if token has extra functions if a number is preceeded
                 if real_token.uses_prev_num && accepted_numbers.contains(&content.chars().nth(index-1).unwrap().to_string().as_str()) {
-                    if dbgmd {
+                    if dbgmd == 2 {
                         real_token.do_action(content.chars().nth(index-1).unwrap().to_string().parse::<u8>().unwrap(), &mut cell_grid, &mut cell_position_x, &mut cell_position_y, &mut zjn_env);
                         println!("index: {} before index: {}", index, index -1);
                         println!("number {}, index {}, caused by {}, current token {}", content.chars().nth(index-1).unwrap(), index-1, content.chars().nth(index).unwrap(), token);
@@ -136,5 +169,6 @@ fn main() {
             }
         }
         index += 1;
-    })
+    });
+    println!(" ");
 }
