@@ -15,7 +15,8 @@ Zudjn is a small esolang that has 2d cell based memory.
 | `y` | set the height of the memory cell grid, has to be at the start (example: set the height to 4: 4y) | yes |
 | `@` | output the current cell value as a number | yes |
 | `&` | output the current cell value as an ascii character | yes |
-| `?` | if the current memory cell value equals a number, do the code in the brackets, (example: if the current cell value is equal to 5, print it as an ascii character: 5?[&] ) | no |
+| `?` | if the current memory cell value equals a number, do the code in the brackets, (example: if the current cell value is equal to 5, print it as an ascii character: 5?&; ) | no |
+| `;` | ends an if statement container | no |
 | `\|` | output the cell grid as a whole (this is mainly used for debugging, but it can be used in other ways) | yes |
 | `/` | if you put two, any text in between them will be ignored | yes |
 
