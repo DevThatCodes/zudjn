@@ -15,6 +15,7 @@ enum TokenActions {
     IfIsThisNumber,
     PrintCellGrid,
     Comment,
+    CloseContainer
 }
 
 #[derive(Debug)]
@@ -28,6 +29,7 @@ struct Token<'a> {
 struct Environment {
     has_set_width: bool,
     in_comment: bool,
+    if_true: bool,
     width: u8,
     height: u8
 }
@@ -38,7 +40,7 @@ impl<'a> Token<'_> {
     }
 
     fn do_action(&self, action_number: u8, cell_grid: &mut Vec<u8>, cell_position_x: &mut u8, cell_position_y: &mut u8, zjn_env: &mut Environment) {
-        if !zjn_env.in_comment {
+        if !zjn_env.in_comment && zjn_env.if_true {
         match self.action {
             TokenActions::MoveLeft => {*cell_position_x -= 1} // decrease cell_position_x
             TokenActions::MoveRight => {*cell_position_x += 1} // increase cell_position_x
@@ -50,7 +52,7 @@ impl<'a> Token<'_> {
             TokenActions::SetHeight => {if zjn_env.has_set_width {zjn_env.set_height(action_number); *cell_grid = vec![0; (zjn_env.width * zjn_env.height).into()]}else {println!("error")}} // required second, set width to what is inputted, then set cell_grid to vec[0; width * height]
             TokenActions::OutputAsNumber => {print!("{}", cell_grid[(*cell_position_y * zjn_env.width + *cell_position_x) as usize])} // print cell_grid[cell_position_y * width + cell_position_x]
             TokenActions::OutputAsAscii => {print!("{}", cell_grid[(*cell_position_y * zjn_env.width + *cell_position_x) as usize] as char)} // print cell_grid[cell_position_y * width + cell_position_x] as char
-            TokenActions::IfIsThisNumber => {println!("this function is a complex one, and therefore it has not been implemented yet")},
+            TokenActions::IfIsThisNumber => {zjn_env.if_true = cell_grid[(*cell_position_y * zjn_env.width + *cell_position_x) as usize] == action_number},
             TokenActions::PrintCellGrid => {
                 print!("[");
                 for y in 0..zjn_env.height {
@@ -64,16 +66,19 @@ impl<'a> Token<'_> {
                     println!(" ");
                 }
             }
-            TokenActions::Comment => {zjn_env.in_comment = true}
+            TokenActions::Comment => {zjn_env.in_comment = true},
+            TokenActions::CloseContainer => {}
         }} else if zjn_env.in_comment && self.action == TokenActions::Comment {
             zjn_env.in_comment = false;
+        } else if !zjn_env.if_true && self.action == TokenActions::CloseContainer {
+            zjn_env.if_true = true;
         }
     }
 }
 
 impl Environment {
     fn create() -> Environment {
-        Environment { has_set_width: false, in_comment: false, width: 0, height: 0}
+        Environment { has_set_width: false, in_comment: false, if_true: true, width: 0, height: 0}
     }
 
     fn set_height(&mut self, height: u8) {
@@ -102,9 +107,10 @@ fn main() {
     // @ : output the current cell value as a number
     // & : output the current cell value as an ascii character
     // ? : |if the current memory cell value equals a number, do the code in the brackets, (example:
-    // if the current cell value is equal to 5, print it as an ascii character: 5?[&] )
+    // if the current cell value is equal to 5, print it as an ascii character: 5?&; )
     // | : output the cell grid as a whole (this is mainly used for debugging, but it can be used in other ways)
     // / : if you put two, any text in between them will be ignored
+    // ; : ends the if statement container
 
     let mut cell_position_x : u8 = 0;
     let mut cell_position_y : u8 = 0;
